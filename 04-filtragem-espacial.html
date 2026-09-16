@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filtragem espacial: o que muda quando o computador olha a vizinhança de um pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef2f6;
+    --paper-card: #ffffff;
+    --ink: #1b222c;
+    --ink-soft: #4a5568;
+    --blue: #2f5d8a;
+    --blue-soft: #d9e6f2;
+    --green: #3e6b54;
+    --green-soft: #e1ede6;
+    --rule: #c7d2dd;
+    --max: 680px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Public Sans', sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  header.post-head {
+    margin-bottom: 48px;
+  }
+
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1.25;
+    margin: 0 0 18px;
+    color: var(--ink);
+  }
+
+  .byline {
+    font-size: 15px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+  }
+
+  h2 {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 1.35rem;
+    margin: 48px 0 14px;
+    color: var(--ink);
+  }
+
+  p { margin: 0 0 18px; }
+
+  a { color: var(--blue); }
+
+  .lede {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+  }
+
+  .note {
+    background: var(--green-soft);
+    border-left: 3px solid var(--green);
+    padding: 18px 20px;
+    margin: 28px 0;
+    border-radius: 2px;
+  }
+
+  .note p:last-child { margin-bottom: 0; }
+
+  .note-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--green);
+    margin: 0 0 8px;
+  }
+
+  .trivia {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    padding: 20px 22px;
+    margin: 32px 0;
+    border-radius: 4px;
+  }
+
+  .trivia-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--blue);
+    margin: 0 0 8px;
+  }
+
+  .trivia p:last-child { margin-bottom: 0; }
+
+  .kernels {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 24px 0 8px;
+  }
+
+  .kernel-block { text-align: center; }
+
+  .kernel-caption {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  .kernel {
+    display: grid;
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .kernel span {
+    background: var(--paper-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .kernel span.center { background: var(--blue-soft); font-weight: 500; }
+  .kernel span.neg { color: var(--blue); }
+
+  .threshold-bar {
+    margin: 20px 0 6px;
+  }
+
+  .gradient {
+    height: 28px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #10141a, #f4f6f8);
+    position: relative;
+    border: 1px solid var(--rule);
+  }
+
+  .marker {
+    position: absolute;
+    left: 50%;
+    top: -6px;
+    bottom: -6px;
+    width: 2px;
+    background: var(--blue);
+  }
+
+  .marker::after {
+    content: "128";
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+  }
+
+  .gradient-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.92em;
+    background: var(--blue-soft);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  pre {
+    background: #10141a;
+    color: #dbe4ee;
+    padding: 18px 20px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin: 20px 0;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  footer.post-foot {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 1.6rem; }
+    .kernels { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="post-head">
+    <p class="kicker">Semana 5 &middot; 13 de setembro de 2026</p>
+    <h1>Filtragem espacial: o que muda quando o computador olha a vizinhança de um pixel</h1>
+    <p class="byline">Felipe Sabino</p>
+  </header>
+
+  <p class="lede">Até a semana passada, todo filtro que eu tinha implementado (inverter cores, converter pra escala de cinza, aplicar um limiar de preto e branco) processava um pixel de cada vez, sem olhar pra nada ao redor dele. Essa semana isso muda: entra a filtragem espacial, que decide o valor de um pixel olhando também pros vizinhos dele.</p>
+
+  <div class="note">
+    <p class="note-label">ponto x vizinhança</p>
+    <p>Vale separar bem essas duas famílias, porque os três rascunhos que eu tinha escrito antes deste post meio que misturavam tudo sob o rótulo de "filtro". Inverter, converter pra cinza e aplicar threshold são <strong>transformações de intensidade</strong>: cada pixel de saída depende só do pixel de entrada correspondente, na mesma posição. Já blur, nitidez e detecção de borda são <strong>filtros espaciais de verdade</strong>: o pixel de saída depende de uma região inteira ao redor dele. Como referência rápida do que já vimos: um pixel de intensidade acima de 128 vira branco, abaixo vira preto, e isso não usa a vizinhança em nada.</p>
+    <div class="threshold-bar">
+      <div class="gradient"><div class="marker"></div></div>
+      <div class="gradient-labels"><span>preto (0)</span><span>branco (255)</span></div>
+    </div>
+  </div>
+
+  <h2>Convolução: a ideia por trás de tudo</h2>
+  <p>A operação que faz a filtragem espacial funcionar chama-se convolução. Uma matriz pequena, normalmente 3x3, desliza pixel a pixel sobre a imagem. Em cada posição, ela multiplica cada um dos seus valores pelo pixel correspondente da vizinhança, soma tudo, e o resultado vira o novo valor daquele pixel central. Essa matriz é o que a literatura chama de kernel, e o que muda de um efeito pro outro é só o conjunto de números dentro dele.</p>
+
+  <h2>Borrar pra reduzir ruído</h2>
+  <p>O jeito mais simples de borrar uma imagem é fazer uma média da vizinhança: um kernel onde todo valor vale 1/9 (num 3x3) calcula exatamente isso. O resultado tira o ruído fino da imagem, mas também apaga detalhe, então normalmente esse não é o objetivo final, e sim um preparo pra outra etapa (como a detecção de borda, que fica mais confiável numa imagem sem ruído). Uma variação mais suave é o blur gaussiano, que em vez de dar peso igual pra todo vizinho, dá mais peso pro pixel central e vai reduzindo o peso conforme a distância, o que evita o efeito meio "quadriculado" da média simples.</p>
+  <div class="kernels">
+    <div class="kernel-block">
+      <div class="kernel">
+        <span>1/9</span><span>1/9</span><span>1/9</span>
+        <span>1/9</span><span class="center">1/9</span><span>1/9</span>
+        <span>1/9</span><span>1/9</span><span>1/9</span>
+      </div>
+      <p class="kernel-caption">box blur</p>
+    </div>
+  </div>
+
+  <h2>Realçar detalhes (e por que isso é meio a mesma conta da borda)</h2>
+  <p>O kernel que costuma aparecer como "nitidez" nos exemplos da disciplina dá peso alto pro centro e peso negativo pra cada vizinho (algo como 8 no meio e -1 nos oito ao redor). Reparei numa coisa aplicando esse kernel sozinho: como a soma de todos os pesos dá zero, o resultado isolado não é bem uma versão "mais nítida" da imagem, é praticamente um mapa de bordas, já que ele só sobra valor onde existe diferença de intensidade entre o centro e a vizinhança. O que deixa a imagem de fato mais nítida é somar esse resultado de volta à imagem original, reforçando os contornos sem apagar o resto.</p>
+  <div class="kernels">
+    <div class="kernel-block">
+      <div class="kernel">
+        <span class="neg">-1</span><span class="neg">-1</span><span class="neg">-1</span>
+        <span class="neg">-1</span><span class="center">8</span><span class="neg">-1</span>
+        <span class="neg">-1</span><span class="neg">-1</span><span class="neg">-1</span>
+      </div>
+      <p class="kernel-caption">realce / passa-alta</p>
+    </div>
+  </div>
+
+  <h2>Sobel: encontrando bordas com derivada</h2>
+  <p>Uma borda é, por definição, um lugar onde a intensidade muda rápido de um pixel pro outro. O operador de Sobel usa dois kernels 3x3, um pra estimar a variação na horizontal (Gx) e outro na vertical (Gy), que juntos aproximam a derivada da imagem naquele ponto. Onde essa derivada é alta, a chance de existir uma borda também é. É basicamente esse cálculo, repetido pixel a pixel, que dá pra um algoritmo desenhar o contorno de um objeto, de uma letra ou de qualquer forma numa imagem.</p>
+  <div class="kernels">
+    <div class="kernel-block">
+      <div class="kernel">
+        <span>-1</span><span>0</span><span>1</span>
+        <span>-2</span><span class="center">0</span><span>2</span>
+        <span>-1</span><span>0</span><span>1</span>
+      </div>
+      <p class="kernel-caption">Gx (horizontal)</p>
+    </div>
+    <div class="kernel-block">
+      <div class="kernel">
+        <span>-1</span><span>-2</span><span>-1</span>
+        <span>0</span><span class="center">0</span><span>0</span>
+        <span>1</span><span>2</span><span>1</span>
+      </div>
+      <p class="kernel-caption">Gy (vertical)</p>
+    </div>
+  </div>
+
+  <div class="trivia">
+    <p class="trivia-label">curiosidade</p>
+    <p>O operador de Sobel é de 1968, criado por Irwin Sobel enquanto ele fazia doutorado no Stanford Artificial Intelligence Laboratory, mas ele nunca publicou o método formalmente num artigo. A técnica circulou por anos em anotações internas e slides de aula até virar padrão de fato na área, e só foi escrita num artigo oficial (com outro pesquisador, Gary Feldman) quase três décadas depois, em 1990.</p>
+  </div>
+
+  <h2>Testando a matemática antes de escrever em C</h2>
+  <p>Antes de sair implementando convolução na mão em C com a SDL, fui conferir se meu entendimento da matemática batia, usando Python com OpenCV, que já traz blur gaussiano e detecção de bordas prontos:</p>
+  <pre><code>import cv2
+
+img = cv2.imread("kodim23.png", cv2.IMREAD_GRAYSCALE)
+suave = cv2.GaussianBlur(img, (5, 5), 0)
+bordas = cv2.Canny(suave, 100, 200)
+
+cv2.imwrite("bordas.png", bordas)</code></pre>
+  <p>Isso não vai pro projeto em C (lá a ideia é implementar a convolução com as próprias mãos, usando as primitivas da SDL), mas serviu como uma conferência rápida do resultado esperado antes de tentar reproduzir o mesmo efeito em C puro.</p>
+
+  <footer class="post-foot">
+    Próximo passo: aplicar esses kernels dentro do projeto de processamento de imagens em C/SDL3, começando pela equalização de histograma.
+  </footer>
+
+</main>
+</body>
+</html>
