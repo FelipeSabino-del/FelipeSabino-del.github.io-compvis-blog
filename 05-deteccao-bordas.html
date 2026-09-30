@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detecção de bordas: por que um computador deriva antes de desenhar um contorno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef2f6;
+    --paper-card: #ffffff;
+    --ink: #1b222c;
+    --ink-soft: #4a5568;
+    --blue: #2f5d8a;
+    --blue-soft: #d9e6f2;
+    --green: #3e6b54;
+    --green-soft: #e1ede6;
+    --rule: #c7d2dd;
+    --max: 680px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Public Sans', sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  header.post-head { margin-bottom: 48px; }
+
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
+  .kicker .todo {
+    color: #a94442;
+    background: #fdecea;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  h1 {
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1.25;
+    margin: 0 0 18px;
+  }
+
+  .byline {
+    font-size: 15px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+  }
+
+  h2 {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 1.35rem;
+    margin: 48px 0 14px;
+  }
+
+  p { margin: 0 0 18px; }
+  a { color: var(--blue); }
+
+  .lede { font-size: 1.08rem; color: var(--ink-soft); }
+
+  .note {
+    background: var(--green-soft);
+    border-left: 3px solid var(--green);
+    padding: 18px 20px;
+    margin: 28px 0;
+    border-radius: 2px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--green);
+    margin: 0 0 8px;
+  }
+
+  .trivia {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    padding: 20px 22px;
+    margin: 32px 0;
+    border-radius: 4px;
+  }
+  .trivia-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--blue);
+    margin: 0 0 8px;
+  }
+  .trivia p:last-child { margin-bottom: 0; }
+
+  .kernels {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin: 24px 0 8px;
+  }
+  .kernel-block { text-align: center; }
+  .kernel-caption {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+  .kernel {
+    display: grid;
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .kernel span {
+    background: var(--paper-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+  }
+  .kernel span.center { background: var(--blue-soft); font-weight: 500; }
+  .kernel span.neg { color: var(--blue); }
+
+  .kernel.two {
+    grid-template-columns: repeat(2, 40px);
+    grid-template-rows: repeat(2, 40px);
+  }
+
+  figure { margin: 24px 0; text-align: center; }
+  figure svg { max-width: 100%; }
+  figcaption {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  footer.post-foot {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  .refs {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 1.6rem; }
+    .kernels { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="post-head">
+    <p class="kicker"><span class="todo">preencher: semana / data</span></p>
+    <h1>Detecção de bordas: por que um computador deriva antes de desenhar um contorno</h1>
+    <p class="byline">Felipe Sabino</p>
+  </header>
+
+  <p class="lede">Um jeito bom de entender o que é uma borda numa imagem é pensar no desenho de um artista: quando alguém desenha o contorno de uma mão, boa parte da informação da forma já está ali, só nas linhas. É basicamente isso que um algoritmo de detecção de bordas tenta reconstruir a partir dos pixels, e a matemática por trás disso é mais simples do que parece.</p>
+
+  <h2>Borda é onde a imagem "despenca"</h2>
+  <p>Se a gente olhar a intensidade dos pixels ao longo de uma linha da imagem como se fosse um gráfico, uma região de cor constante vira um trecho reto, e uma borda aparece como uma descida ou subida brusca, quase um penhasco. Faz sentido, então, usar derivada pra encontrar isso: a primeira derivada tem um pico exatamente onde a intensidade muda rápido, e fica em zero onde a imagem está uniforme. A segunda derivada ajuda a apontar o centro exato dessa mudança, porque ela cruza o zero bem no meio da transição, o que dá uma localização mais precisa de onde a borda realmente está.</p>
+
+  <h2>O gradiente: intensidade e direção da mudança</h2>
+  <p>Numa imagem (que tem duas dimensões), a derivada sozinha não é suficiente, porque a mudança pode acontecer na horizontal, na vertical, ou numa direção qualquer entre as duas. Por isso se usa o gradiente, que é basicamente duas derivadas parciais juntas (uma em x, outra em y) formando um vetor. Esse vetor aponta pra direção em que a intensidade muda mais rápido, e o tamanho dele (a magnitude) indica o quão forte é essa mudança: magnitude alta é uma borda nítida, magnitude baixa é mais parecido com um degradê suave.</p>
+
+  <figure>
+    <svg viewBox="0 0 320 120" width="320" height="120">
+      <rect x="0" y="0" width="150" height="120" fill="#1b222c"/>
+      <rect x="150" y="0" width="170" height="120" fill="#eef2f6"/>
+      <line x1="150" y1="60" x2="220" y2="60" stroke="#2f5d8a" stroke-width="3"/>
+      <polygon points="220,60 210,54 210,66" fill="#2f5d8a"/>
+      <circle cx="150" cy="60" r="3" fill="#2f5d8a"/>
+    </svg>
+    <figcaption>gradiente apontando da região escura pra clara, perpendicular à borda</figcaption>
+  </figure>
+
+  <h2>Transformando isso em kernel</h2>
+  <p>Na prática, essa derivada parcial é calculada com um kernel pequeno que desliza pela imagem, do mesmo jeito que vimos nos filtros de blur e nitidez. Existem algumas famílias de kernel pra aproximar o gradiente, e elas foram ficando mais robustas com o tempo:</p>
+
+  <div class="kernels">
+    <div class="kernel-block">
+      <div class="kernel two">
+        <span>1</span><span>0</span>
+        <span>0</span><span class="neg">-1</span>
+      </div>
+      <p class="kernel-caption">Roberts (2x2, diagonal)</p>
+    </div>
+    <div class="kernel-block">
+      <div class="kernel">
+        <span class="neg">-1</span><span>0</span><span>1</span>
+        <span class="neg">-1</span><span class="center">0</span><span>1</span>
+        <span class="neg">-1</span><span>0</span><span>1</span>
+      </div>
+      <p class="kernel-caption">Prewitt (hx)</p>
+    </div>
+    <div class="kernel-block">
+      <div class="kernel">
+        <span class="neg">-1</span><span>0</span><span>1</span>
+        <span class="neg">-2</span><span class="center">0</span><span>2</span>
+        <span class="neg">-1</span><span>0</span><span>1</span>
+      </div>
+      <p class="kernel-caption">Sobel (hx)</p>
+    </div>
+  </div>
+
+  <p>O Roberts é o mais simples e mais sensível a bordas na diagonal, o que também o deixa mais sensível a ruído. O Prewitt já olha pra uma faixa de três linhas em vez de duas, dando peso igual pra elas. O Sobel (que eu já tinha usado no post da semana passada sem entender totalmente o porquê) faz a mesma coisa que o Prewitt, mas dá peso dobrado pra linha central, o que deixa a estimativa um pouco mais resistente a ruído sem perder a sensibilidade à borda.</p>
+
+  <div class="note">
+    <p class="note-label">o problema</p>
+    <p>Tem um detalhe incômodo aqui: derivada amplifica ruído. Se a imagem tem um textura cheia de pequenas variações (tipo um tecido ou um sensor com ruído), cada uma dessas variações também gera um "pico" na derivada, e o resultado fica cheio de bordas falsas onde na verdade não tem contorno nenhum, só ruído.</p>
+  </div>
+
+  <h2>A saída: suavizar antes de derivar</h2>
+  <p>A solução mais direta é aplicar um blur (geralmente gaussiano) antes de calcular a derivada, pra apagar o ruído fino e sobrar só as transições que realmente importam. O que achei elegante é que não precisa fazer isso em duas etapas separadas: existe uma propriedade da convolução que diz que derivar o resultado de um blur é a mesma coisa que convolucionar a imagem direto com a derivada do kernel de blur. Ou seja, dá pra pré-calcular um único kernel (a "derivada da gaussiana") e aplicar ele uma vez só, em vez de borrar e depois derivar em dois passos.</p>
+
+  <figure>
+    <svg viewBox="0 0 340 110" width="340" height="110">
+      <polyline points="0,90 40,90 60,85 80,60 100,20 120,15 140,15 160,15 200,15 240,90 340,90"
+        fill="none" stroke="#4a5568" stroke-width="1.5" opacity="0.55"/>
+      <polyline points="0,88 20,90 40,86 60,92 80,55 100,18 120,20 140,12 160,18 180,14 200,20 220,60 240,88 260,90 280,86 300,90 320,88 340,90"
+        fill="none" stroke="#1b222c" stroke-width="1.3"/>
+      <path d="M100,15 Q120,-5 140,15" fill="none" stroke="#2f5d8a" stroke-width="2"/>
+    </svg>
+    <figcaption>sinal com ruído (linha escura) vs. sinal real (linha suave); a curva azul é o pico que a derivada da gaussiana detecta</figcaption>
+  </figure>
+
+  <h2>Suavizar demais também tem custo</h2>
+  <p>O tamanho do kernel gaussiano usado (geralmente chamado de sigma) controla esse equilíbrio: um sigma pequeno preserva detalhes finos, mas deixa passar mais ruído; um sigma grande limpa bem o ruído, mas borra a imagem a ponto de bordas finas (tipo listras bem próximas umas das outras) desaparecerem ou se misturarem. Não existe um valor "certo" de sigma, é uma escolha de compromisso dependendo do que se quer detectar.</p>
+
+  <footer class="post-foot">
+    Baseado no material da aula de detecção de bordas (referências: Gonzalez &amp; Woods, Processamento digital de imagens; Majumder &amp; Gopi, Introduction to Visual Computing; Pedrini, H.). Próximo passo natural seria o detector de Canny, que junta tudo isso (suavização, gradiente, supressão de não-máximos e limiarização por histerese), mas isso fica pra outro post.
+  </footer>
+
+</main>
+</body>
+</html>
