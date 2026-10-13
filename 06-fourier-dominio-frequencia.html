@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformada de Fourier: trocando o espaço de pixels pelo espaço de frequências</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef2f6;
+    --paper-card: #ffffff;
+    --ink: #1b222c;
+    --ink-soft: #4a5568;
+    --blue: #2f5d8a;
+    --blue-soft: #d9e6f2;
+    --green: #3e6b54;
+    --green-soft: #e1ede6;
+    --rule: #c7d2dd;
+    --max: 680px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Public Sans', sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: var(--max); margin: 0 auto; padding: 64px 24px 96px; }
+  header.post-head { margin-bottom: 48px; }
+  .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
+  .kicker .todo { color: #a94442; background: #fdecea; padding: 1px 6px; border-radius: 3px; }
+  h1 { font-family: 'Lora', serif; font-weight: 700; font-size: 2rem; line-height: 1.25; margin: 0 0 18px; }
+  .byline { font-size: 15px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 14px; }
+  h2 { font-family: 'Lora', serif; font-weight: 600; font-size: 1.35rem; margin: 48px 0 14px; }
+  p { margin: 0 0 18px; }
+  a { color: var(--blue); }
+  .lede { font-size: 1.08rem; color: var(--ink-soft); }
+
+  .note { background: var(--green-soft); border-left: 3px solid var(--green); padding: 18px 20px; margin: 28px 0; border-radius: 2px; }
+  .note p:last-child { margin-bottom: 0; }
+  .note-label { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--green); margin: 0 0 8px; }
+
+  .formula {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14.5px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  figure { margin: 28px 0; text-align: center; }
+  figure svg { max-width: 100%; }
+  figcaption { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+
+  footer.post-foot { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-soft); }
+
+  @media (max-width: 480px) { h1 { font-size: 1.6rem; } }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="post-head">
+    <p class="kicker"><span class="todo">preencher: semana / data</span></p>
+    <h1>Transformada de Fourier: trocando o espaço de pixels pelo espaço de frequências</h1>
+    <p class="byline">Felipe Sabino</p>
+  </header>
+
+  <p class="lede">Até agora, todo filtro que apliquei (blur, nitidez, Sobel) trabalhou direto em cima dos pixels: o domínio espacial. Essa semana a aula mudou de perspectiva completamente: em vez de olhar pra imagem como uma grade de pixels, dá pra olhar pra ela como uma soma de ondas, cada uma com uma frequência diferente. Esse outro jeito de representar a mesma informação é o domínio da frequência, e quem faz essa troca de um lado pro outro é a Transformada de Fourier.</p>
+
+  <h2>Qualquer sinal é uma soma de ondas</h2>
+  <p>A ideia de Fourier (de 1807, e que pelo visto foi recebida com desconfiança na época) é que dá pra reconstruir praticamente qualquer função periódica somando senos e cossenos de frequências diferentes, cada um com seu próprio peso. Quanto mais ondas eu somo, mais a soma se aproxima da função original, mesmo que a função original seja algo "quadrado" e nada parecido com uma onda.</p>
+
+  <figure>
+    <svg viewBox="0 0 360 150" width="360" height="150">
+      <polyline points="0,75 20,55 40,95 60,55 80,95 100,55 120,95 140,55 160,95 180,55 200,95 220,55 240,95 260,55 280,95 300,55 320,95 340,55 360,95" fill="none" stroke="#c7d2dd" stroke-width="1"/>
+      <path d="M0,75 Q45,35 90,75 T180,75 T270,75 T360,75" fill="none" stroke="#2f5d8a" stroke-width="1.4" opacity="0.55"/>
+      <path d="M0,75 Q22,15 45,75 T90,75 T135,75 T180,75 T225,75 T270,75 T315,75 T360,75" fill="none" stroke="#2f5d8a" stroke-width="1.1" opacity="0.4"/>
+      <path d="M0,70 L10,20 L80,20 L90,130 L170,130 L180,20 L260,20 L270,130 L340,130 L360,70" fill="none" stroke="#1b222c" stroke-width="2"/>
+    </svg>
+    <figcaption>poucas ondas somadas (azul) já começam a desenhar o contorno de uma onda quadrada (preto)</figcaption>
+  </figure>
+
+  <h2>Transformar e voltar sem perder nada</h2>
+  <p>A Transformada de Fourier (FT) pega uma função no domínio espacial e devolve quanto de cada frequência existe nela. A Transformada Inversa (IFT) faz o caminho contrário, pegando as frequências e reconstruindo a função original. O ponto importante é que essa troca de domínio não perde informação: dá pra ir e voltar quantas vezes quiser, e a imagem volta exatamente igual. Não é uma aproximação, é só outro jeito de enxergar o mesmo dado.</p>
+
+  <div class="formula">F(u) = ∫ f(x) · e<sup>−j2πux</sup> dx &nbsp;&nbsp;(FT)<br>f(x) = ∫ F(u) · e<sup>j2πux</sup> du &nbsp;&nbsp;(IFT)</div>
+
+  <p>Pra uma imagem (que tem duas dimensões, linhas e colunas), a ideia é a mesma, só que a soma passa a rodar nas duas direções ao mesmo tempo, somando sobre cada combinação de linha e coluna da imagem.</p>
+
+  <h2>O espectro: quanto de cada frequência existe</h2>
+  <p>O resultado da FT em cada ponto é um número complexo, então ele tem uma parte real e uma imaginária. Pra visualizar isso, normalmente se usa a magnitude desse número (o espectro de frequência), que mostra o quanto de cada frequência está presente na imagem, e o ângulo de fase, que indica onde essa frequência está posicionada (mas que quase não é usado na prática, porque é mais fácil simplesmente olhar pra imagem original pra saber onde as coisas estão).</p>
+
+  <div class="note">
+    <p class="note-label">conectando com os posts anteriores</p>
+    <p>Isso explica uma coisa que eu já tinha usado sem entender direito: regiões uniformes de uma imagem correspondem a frequências baixas, e bordas (aquelas mudanças bruscas de intensidade que o Sobel detecta) correspondem a frequências altas. Faz sentido: uma borda é uma transição rápida, e pra representar uma transição rápida numa soma de ondas, é preciso ondas de frequência alta.</p>
+  </div>
+
+  <h2>Dualidade: as mesmas regras valem dos dois lados</h2>
+  <p>Teve três propriedades que achei particularmente úteis de guardar:</p>
+
+  <figure>
+    <svg viewBox="0 0 360 120" width="360" height="120">
+      <line x1="40" y1="100" x2="40" y2="10" stroke="#c7d2dd"/>
+      <line x1="10" y1="90" x2="100" y2="90" stroke="#c7d2dd"/>
+      <line x1="40" y1="90" x2="40" y2="15" stroke="#1b222c" stroke-width="2.5"/>
+      <line x1="200" y1="100" x2="200" y2="10" stroke="#c7d2dd"/>
+      <line x1="170" y1="20" x2="330" y2="20" stroke="#2f5d8a" stroke-width="2"/>
+    </svg>
+    <figcaption>um impulso estreito no espaço (esquerda) vira uma constante espalhada na frequência (direita), e vice-versa</figcaption>
+  </figure>
+
+  <p>Primeiro, um impulso localizado num domínio (um pico estreito e isolado) vira uma constante espalhada por todo o outro domínio, e o contrário também é verdade. Segundo, alargar uma função num domínio estreita ela no outro: quanto mais "espalhada" a função fica no espaço, mais concentrada ela fica na frequência, e vice-versa. Terceiro, e esse foi o que mais me interessou pro projeto: convolução no domínio espacial é multiplicação no domínio da frequência. Ou seja, aplicar um kernel deslizando pela imagem (o que venho fazendo até agora) é matematicamente equivalente a transformar a imagem pra frequência, multiplicar por um filtro ali, e transformar de volta.</p>
+
+  <h2>Blur visto pela frequência</h2>
+  <p>Isso deixa mais claro por que um blur é chamado de filtro passa-baixa: ele deixa passar as frequências baixas (as áreas lisas da imagem) e corta as frequências altas (os detalhes finos e bordas). Quanto maior o kernel de blur, menor é a faixa de frequências que ele deixa passar, e mais agressivo fica o efeito de borrão.</p>
+
+  <figure>
+    <svg viewBox="0 0 360 100" width="360" height="100">
+      <circle cx="60" cy="50" r="42" fill="#d9e6f2" stroke="#2f5d8a"/>
+      <circle cx="160" cy="50" r="30" fill="#d9e6f2" stroke="#2f5d8a"/>
+      <circle cx="250" cy="50" r="20" fill="#d9e6f2" stroke="#2f5d8a"/>
+      <circle cx="320" cy="50" r="11" fill="#d9e6f2" stroke="#2f5d8a"/>
+    </svg>
+    <figcaption>espectro de um filtro passa-baixa encolhendo conforme o kernel de blur fica maior</figcaption>
+  </figure>
+
+  <p>Um filtro passa-tudo, por outro lado, é só a convolução com um impulso: multiplica o espectro inteiro por 1, não corta frequência nenhuma, e a imagem sai idêntica à original. Faz sentido como caso extremo pra entender os outros filtros: um passa-baixa é um passa-tudo que vai cortando progressivamente as frequências mais altas.</p>
+
+  <footer class="post-foot">
+    Baseado no material da aula sobre domínio da frequência (referências: Gonzalez &amp; Woods, Processamento digital de imagens; Majumder &amp; Gopi, Introduction to Visual Computing; Azevedo, Conci &amp; Leta, Computação Gráfica: teoria e prática vol. 2). Ainda falta a parte de amostragem e aliasing, que a aula cobriu bastante mas fica pro próximo post.
+  </footer>
+
+</main>
+</body>
+</html>
