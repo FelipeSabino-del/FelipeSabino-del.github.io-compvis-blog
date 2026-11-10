@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O que eu levo de Computação Visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef2f6;
+    --paper-card: #ffffff;
+    --ink: #1b222c;
+    --ink-soft: #4a5568;
+    --blue: #2f5d8a;
+    --blue-soft: #d9e6f2;
+    --green: #3e6b54;
+    --green-soft: #e1ede6;
+    --rule: #c7d2dd;
+    --max: 680px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Public Sans', sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: var(--max); margin: 0 auto; padding: 64px 24px 96px; }
+  header.post-head { margin-bottom: 48px; }
+  .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
+  .kicker .todo { color: #a94442; background: #fdecea; padding: 1px 6px; border-radius: 3px; }
+  h1 { font-family: 'Lora', serif; font-weight: 700; font-size: 2rem; line-height: 1.25; margin: 0 0 18px; }
+  .byline { font-size: 15px; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 14px; }
+  h2 { font-family: 'Lora', serif; font-weight: 600; font-size: 1.35rem; margin: 44px 0 14px; }
+  p { margin: 0 0 18px; }
+  p strong { font-weight: 600; }
+  .lede { font-size: 1.08rem; color: var(--ink-soft); }
+
+  @media (max-width: 480px) { h1 { font-size: 1.6rem; } }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="post-head">
+    <p class="kicker"><span class="todo">Semana 8 &middot; 10 de novembro de 2026</span></p>
+    <h1>O que eu levo de Computação Visual</h1>
+    <p class="byline">Felipe Sabino</p>
+  </header>
+
+  <p class="lede">Esse é o último post e, em vez de um conteúdo novo, ele fecha o semestre com o que eu aprendi. Vou falar do que escolhi levar pros posts e do que ficou depois de escrevê-los.</p>
+
+  <h2>O que eu escolhi levar pros posts</h2>
+  <p>Nem tudo que a gente viu em aula cabia num post, então fui escolhendo o que levar. Em cada semana fiquei com a ideia que segurava o resto.</p>
+  <p><strong>Filtragem espacial.</strong> O valor de um pixel passa a depender da vizinhança, e o que muda de um efeito pro outro (blur, nitidez, borda) é só o conjunto de números do kernel.</p>
+  <p><strong>Detecção de bordas.</strong> Borda é mudança brusca de intensidade, então se usa derivada. Só que derivada amplifica ruído, e por isso a imagem é borrada antes.</p>
+  <p><strong>Transformada de Fourier.</strong> A mesma imagem pode ser vista como uma soma de ondas, e dá pra ir e voltar entre os dois jeitos de olhar sem perder nada.</p>
+  <p><strong>Dualidade, ruído e aliasing.</strong> Escolhi mostrar três coisas: a dualidade (convolução no espaço vira multiplicação na frequência), o ruído periódico que vira ponto no espectro e dá pra apagar, e o aliasing, que é frequência alta com poucas amostras. Sobre amostragem deixei as funções de fora e fiquei só com a ideia geral.</p>
+  <p>Olhando tudo de uma vez, é uma história só: borrar é cortar frequência alta, borda é frequência alta e reduzir uma imagem sem borrar antes gera aliasing. Foi quando percebi que blur, borda e aliasing eram o mesmo assunto visto de ângulos diferentes que a matéria começou a fazer sentido pra mim.</p>
+
+  <h2>Sobre usar IA</h2>
+  <p>O que eu percebi sobre a IA é que ela acelera bastante a parte de escrever e configurar, mas só ajuda de verdade quando eu já sei mais ou menos o que perguntar. Teve post em que o texto saiu mais organizado do que o meu entendimento do assunto na hora, e aí eu precisei voltar nos slides pra alcançar.</p>
+
+  <h2>O que fica</h2>
+  <p>Levo duas coisas. Uma é que imagem é só uma matriz de números e quase tudo que a gente fez foi conta em cima dela, o que tirou um pouco do mistério dos filtros de foto que eu usava sem pensar. A outra é que, mesmo tendo dificuldade em alguns pontos, eu gostei muito de entender como funciona um lado da computação do qual eu não tinha ideia.</p>
+
+</main>
+</body>
+</html>
